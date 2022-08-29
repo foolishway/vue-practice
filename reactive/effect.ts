@@ -23,6 +23,11 @@ export function ref(source) {
     },
     set(target, p, v, receiver): boolean {
       // tragger
+      if (dep.has(target) && dep.get(target)?.has(p)) {
+        for (let effectFn of dep.get(target)!.get(p)!) {
+          effectFn && effectFn()
+        }
+      }
       return false
     }
   })
