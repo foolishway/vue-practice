@@ -58,7 +58,6 @@ function effect(effectFn: () => void) {
 function cleanup(wrapperFn) {
   wrapperFn.dep?.forEach((set) => {
     if (set.has(wrapperFn)) {
-      console.log('***cleanup')
       set.delete(wrapperFn)
     }
   })
