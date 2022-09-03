@@ -1,10 +1,10 @@
-type EffectFn = (() => void) | null
-let activeEffect: any = null;
+export type EffectFn = (() => void) & {dep: Array<Set<EffectFn>>} | null
+let activeEffect: EffectFn = null;
 export let dep = new WeakMap<Object, Map<string|symbol, Set<EffectFn>>>();
 export function ref(source) {
   return new Proxy(source, {
     get(target, p, receiver) {
-      // tracker
+        // tracker
       if (activeEffect) {
         if (!dep.has(target)) {
           dep.set(target, new Map<string, Set<EffectFn>>())
@@ -18,11 +18,12 @@ export function ref(source) {
           depSet!.add(activeEffect)
         }
         if (!activeEffect.dep) activeEffect.dep = []
-        activeEffect.dep.push(depSet)
+        activeEffect.dep.push(depSet!)
       }
       return Reflect.get(target, p, receiver)
     },
     set(target, p, v, receiver): boolean {
+      let result = Reflect.set(target, p, v, receiver)
       // trigger
       if (dep.has(target) && dep.get(target)?.has(p)) {
         let effectsToRun = new Set<EffectFn>()
@@ -36,26 +37,28 @@ export function ref(source) {
           }
         })
       }
-      return Reflect.set(target, p, v, receiver)
+      return result
     }
   })
 }
 
 
-function effect(effectFn: EffectFn) {
+function effect(effectFn: () => void) {
   const wrapperFn = () => {
     // cleanup
     cleanup(wrapperFn)
-    activeEffect = wrapperFn
+    activeEffect = wrapperFn as EffectFn
     effectFn && effectFn()
     activeEffect = null
   }
   wrapperFn();
+  return wrapperFn as EffectFn
 }
 
 function cleanup(wrapperFn) {
   wrapperFn.dep?.forEach((set) => {
     if (set.has(wrapperFn)) {
+      console.log('***cleanup')
       set.delete(wrapperFn)
     }
   })

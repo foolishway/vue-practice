@@ -1,31 +1,34 @@
-import effect, {ref, dep} from '../reactive/effect'
+import effect, {ref, dep, EffectFn} from '../reactive/effect'
 
-test('ref get', () => {
-  let foo = {
-    get a() {
-      return this.a
-    }
-  }
-  let bar = {
-    a: 'bar'
-  }
-  let r = ref(foo);
-  expect(Reflect.get(r, 'a', bar)).toBe(Reflect.get(bar, 'a'));
-});
-
-
-test('ref def trigger', () => {
+test('effect trigger', () => {
   let foo = {
      a: 0
   }
   let r = ref(foo);
   let traggerCounter = 0
   function effectFn() {
-    console.log(r.a++)
+    r.a++
     traggerCounter++
   }
   effect(effectFn)
   r.a++
   r.a++
   expect(traggerCounter).toBe(3)
+})
+
+test('effect cleanup', () => {
+  let foo = {
+      a: 0,
+      b: 0,
+      ok: true
+  }
+  let r = ref(foo);
+  function effectFn() {
+    r.ok ? r.a : ''
+  }
+
+  let wrapperFn: EffectFn = effect(effectFn)
+  expect(wrapperFn?.dep.length).toBe(2)
+  r.ok = false
+  expect(wrapperFn?.dep.length).toBe(1)
 })
