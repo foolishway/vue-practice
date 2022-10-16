@@ -25,7 +25,7 @@ export function ref(source) {
     set(target, p, v, receiver): boolean {
       let result = Reflect.set(target, p, v, receiver)
       // trigger
-      if (dep.has(target) && dep.get(target)?.has(p)) {
+      if (shouldTrigger && dep.has(target) && dep.get(target)?.has(p)) {
         let effectsToRun = new Set<EffectFn>()
         dep.get(target)!.get(p)!.forEach(effectFn => {
           effectsToRun.add(effectFn)
@@ -42,13 +42,15 @@ export function ref(source) {
   })
 }
 
-
+let shouldTrigger = true;
 function effect(effectFn: () => void) {
   const wrapperFn = () => {
     // cleanup
     cleanup(wrapperFn)
     activeEffect = wrapperFn as EffectFn
+    shouldTrigger = false;
     effectFn && effectFn()
+    shouldTrigger = true;
     activeEffect = null
   }
   wrapperFn();

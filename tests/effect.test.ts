@@ -14,6 +14,17 @@ test('effect trigger', () => {
   r.a++
   r.a++
   expect(traggerCounter).toBe(3)
+
+  function effectFn2() {
+    r.a++
+  }
+  effect(effectFn2)
+  effect(effectFn2)
+})
+
+
+test('effect trigger2', () => {
+  
 })
 
 test('effect cleanup', () => {
